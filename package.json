@@ -1,0 +1,15 @@
+{
+  "name": "quoter",
+  "version": "0.0.0",
+  "author": "Ben Bergstein",
+  "main": "dist/quoter.js",
+  "license": "BSD",
+  "scripts": {
+    "test": "npm test"
+  },
+  "dependencies": {
+    "grunt":"*",
+    "grunt-coffee-browser-project":"*",
+    "grunt-contrib-watch":"*"
+  }
+}
