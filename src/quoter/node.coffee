@@ -1,11 +1,11 @@
-class Node
-  @findSharedAncestor: (firstNode, secondNode) ->
+if typeof Node isnt 'undefined'
+  Node.findSharedAncestor = (firstNode, secondNode) ->
     if firstNode is secondNode then firstNode
-    else if secondNode.node.contains(firstNode) && firstNode.node.parentNode is secondNode then secondNode
-    else if firstNode.node.contains(secondNode) && secondNode.node.parentNode is firstNode then firstNode
+    else if secondNode.contains(firstNode) || firstNode.parentNode is secondNode then secondNode
+    else if firstNode.contains(secondNode) || secondNode.parentNode is firstNode then firstNode
     else
-      firstParentNode = firstNode.node
-      secondParentNode = secondNode.node
+      firstParentNode = firstNode
+      secondParentNode = secondNode
       ancestor = false
       while firstParentNode = firstParentNode.parentNode
         while  secondParentNode = secondParentNode.parentNode
@@ -15,18 +15,14 @@ class Node
         if firstParentNode is secondParentNode
           ancestor = firstParentNode
           break
-        secondParentNode = secondNode.node
-      new Node(ancestor)
+        secondParentNode = secondNode
+      ancestor
 
-  constructor: (@node) ->
-
-  collectTextNodes: ->
+  Node::collectTextNodes = ->
     textNodes = []
-    for child in @node.childNodes
+    for child in @childNodes
       if child.nodeType is child.TEXT_NODE
         textNodes.push(child)
       else
-        textNodes = textNodes.concat(new Node(child).collectTextNodes())
+        textNodes = textNodes.concat(child.collectTextNodes())
     textNodes
-
-module.exports = Node

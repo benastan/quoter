@@ -1,17 +1,25 @@
-Node = require('./node')
+require('./node')
 
 class Selection
   constructor: ->
-    @selection = document.getSelection()
-    { anchorNode, @anchorOffset, @baseNode, @baseOffset, extentNode, @extentOffset, @focusNode, @focusOffset, @isCollapsed, @rangeCount, @type } = @selection
+    @getSelection()
     @string = @selection.toString()
     @length = @string.length
-    @anchorNode = new Node(anchorNode)
-    @extentNode = new Node(extentNode)
-    @ancestorNode = Node.findSharedAncestor(@anchorNode, @extentNode)
-    @textNodes = @ancestorNode.collectTextNodes()
+    @openTag = '<span style="background-color: green" class="quoter-selected-text">'
+    @closeTag = '</span>'
+    @ancestorNode = Node.findSharedAncestor(@anchorNode, @focusNode)
+    @textNodes = (
+      if @anchorNode is @focusNode
+        [ @anchorNode ]
+      else
+        @ancestorNode.collectTextNodes()
+    )
     @filterTextNodes()
     @wrapNodes()
+
+  getSelection: ->
+    @selection = document.getSelection()
+    { @anchorNode, @anchorOffset, @baseNode, @baseOffset, @focusNode, @focusOffset, @focusNode, @focusOffset, @isCollapsed, @rangeCount, @type } = @selection
 
   filterTextNodes: ->
     textNodes = []
@@ -22,14 +30,28 @@ class Selection
 
   wrapNodes: ->
     if @textNodes.length is 1
-      @wrapSingleNode()
+      @wrapSelectedTextWithinNode(@anchorNode, @anchorOffset, @focusOffset)
     else
-      @wrapFirstNode()
-      @wrapLastNode()
-    for node in @textNodes
-      parent = node.parentElement
-      unless node.textContent.match(/^\s+$/) || ! parent
-        html = parent.innerHTML
-        parent.innerHTML = '<span style="background-color: green">'+html+'</span>'
+      @wrapSelectedTextWithinNode(@anchorNode, @anchorOffset)
+      @wrapSelectedTextWithinNode(@focusNode, 0, @focusOffset)
+      for node in @textNodes.slice(1, -1)
+        @wrapSelectedTextWithinNode(node)
+
+
+  wrapSelectedTextWithinNode: (node, start = 0, end = false) ->
+    parent = node.parentElement
+    if ! node.textContent.match(/^\s+$/) && parent
+      chars = node.textContent.split('')
+      chars.splice(start, 0, @openTag)
+      if end
+        chars.splice(end + 1, 0, @closeTag)
+      else
+        chars.push(@closeTag)
+      intermediateNode = document.createElement('span')
+      intermediateNode.innerHTML = chars.join('')
+      while intermediateNode.childNodes.length
+        child = intermediateNode.childNodes[0]
+        parent.insertBefore(child, node)
+      parent.removeChild(node)
 
 module.exports = Selection
